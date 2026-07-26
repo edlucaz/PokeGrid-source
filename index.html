@@ -664,6 +664,7 @@
         </div>`;
       const wv = document.createElement('webview');
       wv.partition = 'persist:conta' + (i + 1);
+      wv.setAttribute('webpreferences', 'spellcheck=no'); // sem dicionario por painel: nao ha campo de texto livre no jogo
       wv.src = START_URL;
       panel.appendChild(wv);
       grid.appendChild(panel);

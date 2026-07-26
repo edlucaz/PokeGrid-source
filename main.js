@@ -7,6 +7,33 @@ const https = require('https'); // so pro webhook opcional do Discord
 // E so log, nao afeta o app. Mantem so erros fatais.
 app.commandLine.appendSwitch('log-level', '3');
 
+// ===== Memoria: 4 paineis = 4 processos de renderer (cada webview tem sua propria
+// partition/sessao, entao o Chromium exige processo separado por conta; nao da pra
+// mesclar). O que da pra cortar e o peso de cada processo e o processo de GPU inteiro. =====
+
+// Sem GPU: o jogo e 2D simples e o Modo Eco/Cartas ja trava o desenho em 1-15fps,
+// entao nao ha o que acelerar por hardware. Isso remove o processo de GPU (renderer
+// por software fica mais barato em RAM aqui do que manter a composicao acelerada).
+app.disableHardwareAcceleration();
+
+// Poda de subsistemas do Chromium que o app nunca usa (sync, discovery de rede,
+// atualizador de componentes, telemetria, tradutor). Reduz processos auxiliares e
+// conexoes de fundo por sessao. password-store=basic evita cada uma das 4 sessoes
+// abrir sua propria conexao com o keyring do sistema (o app ja tem seu proprio
+// armazenamento de credenciais via safeStorage, nao usa o password manager do Chromium).
+app.commandLine.appendSwitch('disable-background-networking');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-domain-reliability');
+app.commandLine.appendSwitch('disable-sync');
+app.commandLine.appendSwitch('disable-translate');
+app.commandLine.appendSwitch('metrics-recording-only');
+app.commandLine.appendSwitch('password-store', 'basic');
+app.commandLine.appendSwitch('disable-features', 'OptimizationHints,MediaRouter,DialMediaRouteProvider,Translate');
+
+// Teto no heap do V8 de cada processo (paineis + janela principal). 256MB sobra pra
+// um jogo idle; existe pra evitar que um vazamento em algum painel cresca sem limite.
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
+
 // ===== Relatorio de erros: qualquer crash/travamento cai num arquivo que o usuario pode enviar =====
 const errFile = () => path.join(app.getPath('userData'), 'relatorio-de-erros.log');
 let errCabecalho = false;
