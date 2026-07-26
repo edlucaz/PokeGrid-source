@@ -6,7 +6,8 @@
   "author": "soufoka",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --linux AppImage"
+    "dist": "electron-builder --linux AppImage",
+    "dist:win": "electron-builder --win --x64"
   },
   "keywords": [
     "electron",
@@ -37,6 +38,12 @@
       ],
       "category": "Game",
       "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "build/icon.ico"
     }
   }
 }
