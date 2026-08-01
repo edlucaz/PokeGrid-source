@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/bg"
+            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+            app:title="@string/app_name"
+            app:titleTextColor="@color/text_primary" />
+
+        <!-- Full-screen stage: exactly one of the two panel containers is visible at a time,
+             so the active account gets the whole screen — no cramped grid on a phone. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <FrameLayout
+                android:id="@+id/stage0"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <FrameLayout
+                android:id="@+id/stage1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- The "small card to switch screens": a compact floating pill, thumb-reachable at the
+         bottom, showing both accounts' status at a glance. Tap a chip to bring it fullscreen. -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        android:elevation="8dp"
+        android:background="@drawable/switcher_card_bg">
+
+        <include
+            android:id="@+id/chip0"
+            layout="@layout/view_switch_chip" />
+
+        <include
+            android:id="@+id/chip1"
+            layout="@layout/view_switch_chip" />
+    </LinearLayout>
+</FrameLayout>

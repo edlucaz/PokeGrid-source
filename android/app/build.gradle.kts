@@ -8,7 +8,6 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "online.idleworld.pokegrid"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -22,6 +21,23 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+        }
+    }
+
+    // Each flavor is a distinct app (own applicationId, own icon/accent, own GameConfig) that
+    // reuses all the game-agnostic plumbing (GamePanel, CredentialStore, InjectedScripts...) from
+    // src/main. Flavor-only sources live in src/pokegrid and src/pokedream.
+    flavorDimensions += "game"
+    productFlavors {
+        create("pokegrid") {
+            dimension = "game"
+            applicationId = "online.idleworld.pokegrid"
+            resValue("string", "app_name", "PokeGrid")
+        }
+        create("pokedream") {
+            dimension = "game"
+            applicationId = "br.com.pokedream.grid"
+            resValue("string", "app_name", "PokeDream")
         }
     }
 

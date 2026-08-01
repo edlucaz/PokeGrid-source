@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the accent differs from the shared palette (values/colors.xml in src/main) — a violet
+     "dream" tone instead of PokeGrid's red, so the two apps are easy to tell apart. -->
+<resources>
+    <color name="accent">#7C5CFF</color>
+</resources>

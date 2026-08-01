@@ -4,8 +4,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
+import online.idleworld.pokegrid.config.GameConfig
 import online.idleworld.pokegrid.model.Account
-import online.idleworld.pokegrid.model.MAX_PANELS
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -31,7 +31,7 @@ class CredentialStore(context: Context) {
         val bytes = try {
             file.readBytes()
         } catch (e: Exception) {
-            return List(MAX_PANELS) { Account() }
+            return List(GameConfig.PANEL_COUNT) { Account() }
         }
         return try {
             val json = decrypt(bytes)
@@ -42,7 +42,7 @@ class CredentialStore(context: Context) {
                 file.copyTo(File(appContext.filesDir, "accounts.enc.bak-${System.currentTimeMillis()}"))
             } catch (_: Exception) {
             }
-            List(MAX_PANELS) { Account() }
+            List(GameConfig.PANEL_COUNT) { Account() }
         }
     }
 
@@ -57,7 +57,7 @@ class CredentialStore(context: Context) {
 
     private fun parseAccounts(json: String): List<Account> {
         val arr = JSONArray(json)
-        return List(MAX_PANELS) { i ->
+        return List(GameConfig.PANEL_COUNT) { i ->
             if (i < arr.length()) {
                 val o = arr.optJSONObject(i) ?: JSONObject()
                 Account(

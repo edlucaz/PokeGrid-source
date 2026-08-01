@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PokeGrid</string>
+    <!-- app_name comes from each product flavor's resValue (see app/build.gradle.kts) -->
 
     <string name="action_accounts">Treinadores</string>
     <string name="action_eco">Eco</string>
@@ -14,6 +14,8 @@
     <string name="action_sleep">Dormir</string>
     <string name="action_error_log">Relatório de erros</string>
     <string name="action_login_all">Entrar em todas</string>
+    <string name="action_power_on">Ligar esta conta</string>
+    <string name="action_power_off">Desligar esta conta</string>
 
     <string name="panel_status_off">Desligado</string>
     <string name="panel_status_loading">Carregando…</string>

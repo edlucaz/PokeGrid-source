@@ -19,6 +19,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
+import online.idleworld.pokegrid.config.GameConfig
 import online.idleworld.pokegrid.model.Account
 import org.json.JSONObject
 
@@ -45,10 +46,11 @@ class GamePanel(
     }
 
     companion object {
-        const val LOGIN_URL = "https://poke.idleworld.online/login"
-        const val START_URL = "$LOGIN_URL?ref=CJNKGPB"
-        const val GAME_HOST = "poke.idleworld.online"
+        private val LOGIN_URL = GameConfig.LOGIN_URL
+        private val START_URL = GameConfig.START_URL
+        private val GAME_HOST = GameConfig.GAME_HOST
         private const val LOGIN_COOLDOWN_MS = 15_000L
+        private const val LOGIN_WATCHDOG_MS = 20_000L
         private const val RETRY_DELAY_MS = 6_000L
         private const val CRASH_RECREATE_DELAY_MS = 1_500L
         private const val ALERT_POLL_MS = 15_000L
@@ -79,6 +81,7 @@ class GamePanel(
     private var lowRevivesOn = false
     private var lastShinyN = 0
     private var alertPollRunnable: Runnable? = null
+    private var loginWatchdogRunnable: Runnable? = null
     private var retryRunnable: Runnable? = null
 
     init {
@@ -94,6 +97,7 @@ class GamePanel(
         isOff = off
         if (off) {
             stopAlertPolling()
+            stopLoginWatchdog()
             cancelRetry()
             webView.loadUrl("about:blank")
             setStatus(PanelStatus.OFF)
@@ -121,11 +125,13 @@ class GamePanel(
     }
 
     fun setDockHidden(hide: Boolean) {
+        if (!GameConfig.ENABLE_DOCK_TOGGLE) return
         dockHidden = hide
         if (!isOff) webView.evaluateJavascript(scripts.dock(hide), null)
     }
 
     fun setSellGuard(on: Boolean) {
+        if (!GameConfig.ENABLE_SELLGUARD) return
         sellGuardOn = on
         if (!isOff) webView.evaluateJavascript(scripts.sellGuardToggle(on), null)
     }
@@ -141,6 +147,7 @@ class GamePanel(
 
     fun destroy() {
         stopAlertPolling()
+        stopLoginWatchdog()
         cancelRetry()
         try {
             container.removeView(webView)
@@ -251,16 +258,19 @@ class GamePanel(
 
     private fun applyAllScripts() {
         val wv = webView
-        wv.evaluateJavascript(scripts.stateCollector(), null)
+        if (GameConfig.ENABLE_RESOURCE_ALERTS) wv.evaluateJavascript(scripts.stateCollector(), null)
         wv.evaluateJavascript(scripts.eco(currentEcoFps), null)
         wv.evaluateJavascript(scripts.webglWatchdog(), null)
         wv.evaluateJavascript(scripts.popupKiller(), null)
-        wv.evaluateJavascript(scripts.sellGuard(), null)
-        wv.evaluateJavascript(scripts.sellGuardToggle(sellGuardOn), null)
+        if (GameConfig.ENABLE_SELLGUARD) {
+            wv.evaluateJavascript(scripts.sellGuard(), null)
+            wv.evaluateJavascript(scripts.sellGuardToggle(sellGuardOn), null)
+        }
         wv.evaluateJavascript(scripts.chat(chatHidden), null)
-        wv.evaluateJavascript(scripts.dock(dockHidden), null)
+        if (GameConfig.ENABLE_DOCK_TOGGLE) wv.evaluateJavascript(scripts.dock(dockHidden), null)
         applyZoom()
-        startAlertPolling()
+        if (GameConfig.ENABLE_RESOURCE_ALERTS) startAlertPolling()
+        startLoginWatchdog()
     }
 
     private fun applyZoom() {
@@ -329,6 +339,30 @@ class GamePanel(
     private fun stopAlertPolling() {
         alertPollRunnable?.let { handler.removeCallbacks(it) }
         alertPollRunnable = null
+    }
+
+    /**
+     * Backup path for auto-login: onPageFinished only fires on full top-level navigations, but a
+     * client-routed SPA can drop back to its login screen purely via client-side state (no new
+     * page load, so no onPageFinished). This periodically retries maybeAutoLogin(), which is a
+     * cheap no-op when the login form isn't present or the cooldown hasn't elapsed.
+     */
+    private fun startLoginWatchdog() {
+        stopLoginWatchdog()
+        val r = object : Runnable {
+            override fun run() {
+                if (isOff) return
+                maybeAutoLogin()
+                handler.postDelayed(this, LOGIN_WATCHDOG_MS)
+            }
+        }
+        loginWatchdogRunnable = r
+        handler.postDelayed(r, LOGIN_WATCHDOG_MS)
+    }
+
+    private fun stopLoginWatchdog() {
+        loginWatchdogRunnable?.let { handler.removeCallbacks(it) }
+        loginWatchdogRunnable = null
     }
 
     private fun handleAlertResult(resultJson: String?) {
