@@ -31,6 +31,8 @@ import online.idleworld.pokegrid.data.ErrorLog
 import online.idleworld.pokegrid.model.Account
 import online.idleworld.pokegrid.notif.Notifier
 import online.idleworld.pokegrid.service.BackgroundModeController
+import online.idleworld.pokegrid.update.UpdateChecker
+import online.idleworld.pokegrid.update.UpdateInfo
 import online.idleworld.pokegrid.web.AlertKind
 import online.idleworld.pokegrid.web.GamePanel
 import online.idleworld.pokegrid.web.InjectedScripts
@@ -53,6 +55,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
     private lateinit var scripts: InjectedScripts
     private lateinit var toolbar: MaterialToolbar
     private lateinit var bgController: BackgroundModeController
+    private lateinit var updateChecker: UpdateChecker
 
     private lateinit var stages: List<FrameLayout>
     private lateinit var chips: List<ChipViewHolder>
@@ -77,6 +80,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         notifier = Notifier(this)
         scripts = InjectedScripts(this)
         bgController = BackgroundModeController(this)
+        updateChecker = UpdateChecker(this)
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -85,6 +89,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         checkWebViewProfileSupport()
         requestNotificationPermissionIfNeeded()
         bgController.applyPersisted()
+        updateChecker.checkInBackground(force = false) { info -> if (info != null) showUpdateDialog(info) }
 
         accounts = credentialStore.load().toMutableList()
 
@@ -181,6 +186,9 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             R.id.action_awake -> { awakeOn = !awakeOn; applyAwake(); invalidateOptionsMenu() }
             R.id.action_bg -> { bgController.toggle(); invalidateOptionsMenu() }
             R.id.action_diag -> bgController.showDiagnostics()
+            R.id.action_check_update -> updateChecker.checkInBackground(force = true) { info ->
+                if (info != null) showUpdateDialog(info) else showNoUpdateDialog()
+            }
             R.id.action_error_log -> startActivity(Intent.createChooser(errorLog.shareIntent(), null))
             else -> return super.onOptionsItemSelected(item)
         }
@@ -268,5 +276,46 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         ) {
             notifPermLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+    }
+
+    // ----- Self-update (no Play Store: pulls signed APKs from this repo's GitHub Releases) -----
+
+    private fun showUpdateDialog(info: UpdateInfo) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.update_available_title)
+            .setMessage(getString(R.string.update_available_msg, info.tagName))
+            .setPositiveButton(R.string.update_download) { _, _ -> startUpdateDownload(info) }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun showNoUpdateDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.update_none_title)
+            .setMessage(R.string.update_none_msg)
+            .setPositiveButton(R.string.ok, null)
+            .show()
+    }
+
+    private fun startUpdateDownload(info: UpdateInfo) {
+        val progress = AlertDialog.Builder(this)
+            .setTitle(R.string.update_downloading)
+            .setMessage("0%")
+            .setCancelable(false)
+            .show()
+        updateChecker.downloadAndInstall(
+            activity = this,
+            info = info,
+            onProgress = { pct -> progress.setMessage("$pct%") },
+            onBeforeInstall = { progress.dismiss() },
+            onError = { err ->
+                progress.dismiss()
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.update_error_title)
+                    .setMessage(getString(R.string.update_download_error, err))
+                    .setPositiveButton(R.string.ok, null)
+                    .show()
+            }
+        )
     }
 }

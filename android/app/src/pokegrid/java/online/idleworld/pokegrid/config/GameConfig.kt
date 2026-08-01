@@ -11,4 +11,7 @@ object GameConfig {
     const val ENABLE_RESOURCE_ALERTS = true
     const val ENABLE_DOCK_TOGGLE = true
     const val ENABLE_SELLGUARD = true
+
+    /** Matches the release-asset filename this flavor should download (see UpdateChecker). */
+    const val FLAVOR_NAME = "pokegrid"
 }

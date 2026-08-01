@@ -101,6 +101,8 @@ export ANDROID_HOME=/caminho/do/android-sdk   # ou local.properties com sdk.dir=
 - Watchdog de crash/travamento do painel (recria a WebView mantendo a sessão do perfil).
 - Relatório de erros compartilhável.
 - **Continua rodando com a tela apagada ou trocando de app** (menu "Segundo plano: ligado").
+- **Se atualiza sozinho** puxando releases deste repositório (menu "Verificar atualização", e
+  checagem automática — no máximo 1x a cada 12h — ao abrir o app). Ver seção própria abaixo.
 
 ## PokeGrid (4 contas) tem, além disso
 
@@ -167,6 +169,38 @@ está mais rodando. Pra manter as sessões vivas mesmo nesse caso seria preciso 
 esbarra em como o Android mostra diálogo de JS (`window.confirm` da proteção de venda, por
 exemplo, precisa de uma `Activity` de verdade pra aparecer). Ou seja: **não feche o app pelos
 recentes** se quiser manter o farm rodando — só minimizar ou apagar a tela.
+
+## Atualização automática (sem Play Store)
+
+Como o app não está na Play Store, "atualizar sozinho" significa: puxar do GitHub Releases deste
+repositório.
+
+**Como fica publicado:** `.github/workflows/release.yml` builda os dois flavors (`assemblePokegrid
+Release` + `assemblePokedreamRelease`) a cada push em `main` que mexa em `android/**`, e publica os
+dois APKs como uma release com tag `build-<número do run>`. Esse número é o `versionCode` real
+embutido nos APKs (passado como `VERSION_CODE` pro Gradle) — é assim que o app compara "minha
+versão" com "versão disponível" sem precisar de nenhum backend próprio.
+
+**Como o app descobre:** `UpdateChecker` (`android/app/src/main/java/.../update/`) lista as releases
+via API pública do GitHub, acha a mais recente cujo nome de asset bate com o flavor (`FLAVOR_NAME`
+no `GameConfig`), compara o `versionCode` embutido no nome da tag com o instalado
+(`PackageInfoCompat`), e se tiver algo mais novo baixa o APK pra dentro do próprio armazenamento do
+app e abre o instalador do sistema (`Intent.ACTION_VIEW` + `FileProvider`). Checa sozinho 1x a cada
+12h (throttle) e sob demanda pelo menu "Verificar atualização".
+
+**A peça que faz a mágica funcionar: assinatura estável.** Pra o Android aceitar um APK novo como
+*atualização* do que já está instalado (em vez de pedir desinstalar primeiro), as duas assinaturas
+precisam bater. Por isso existe `android/keystore/pokegrid-update.jks`, **commitado no repo de
+propósito** — não é um segredo de verdade (não protege nada sensível; qualquer um com o código já
+pode compilar sua própria cópia), só existe pra todo mundo que builda este app — eu, o CI, você —
+usar sempre a mesma identidade de assinatura. `app/build.gradle.kts` aplica esse keystore no
+`buildType` `release` (o `debug` continua com a keystore de debug automática de sempre, sem
+relação com isso).
+
+**Limite conhecido:** os APKs que te mandei nas mensagens anteriores a essa feature foram
+assinados com uma keystore de debug gerada automaticamente nesta sessão — diferente da nova
+keystore fixa. Então a primeira instalação da versão com esse recurso exige desinstalar a antiga
+uma vez. Dali em diante, toda atualização futura via este mecanismo instala por cima normalmente.
 
 ## Segurança
 

@@ -1,0 +1,49 @@
+name: Build and release Android APKs
+
+# There's no Play Store distribution — this is the whole delivery path. Every run builds both
+# flavors' signed release APKs (signed with the keystore committed at android/keystore, so every
+# build shares the same signature and installs as an update, never a fresh install) and publishes
+# them as a GitHub Release. The in-app UpdateChecker (android/app/src/main/java/.../update/) polls
+# this repo's releases and offers to download+install whichever one matches its own flavor name.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Ensure local.properties points at the runner's Android SDK
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+      - name: Build signed release APKs
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assemblePokegridRelease assemblePokedreamRelease --no-daemon
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          generate_release_notes: true
+          files: |
+            android/app/build/outputs/apk/pokegrid/release/app-pokegrid-release.apk
+            android/app/build/outputs/apk/pokedream/release/app-pokedream-release.apk

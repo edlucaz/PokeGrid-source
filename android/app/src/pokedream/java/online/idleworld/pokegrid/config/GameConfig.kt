@@ -25,4 +25,7 @@ object GameConfig {
     const val ENABLE_RESOURCE_ALERTS = false
     const val ENABLE_DOCK_TOGGLE = false
     const val ENABLE_SELLGUARD = false
+
+    /** Matches the release-asset filename this flavor should download (see UpdateChecker). */
+    const val FLAVOR_NAME = "pokedream"
 }

@@ -37,6 +37,10 @@
         android:title="@string/action_diag"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_check_update"
+        android:title="@string/action_check_update"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_error_log"
         android:title="@string/action_error_log"
         app:showAsAction="never" />
