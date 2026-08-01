@@ -41,8 +41,11 @@
     </LinearLayout>
 
     <!-- The "small card to switch screens": a compact floating pill, thumb-reachable at the
-         bottom, showing both accounts' status at a glance. Tap a chip to bring it fullscreen. -->
+         bottom, showing both accounts' status at a glance. Tap a chip to bring it fullscreen.
+         Bottom margin is topped up at runtime with the system nav-bar inset (see MainActivity),
+         otherwise it sits behind gesture/3-button navigation on edge-to-edge devices. -->
     <LinearLayout
+        android:id="@+id/switcherCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"

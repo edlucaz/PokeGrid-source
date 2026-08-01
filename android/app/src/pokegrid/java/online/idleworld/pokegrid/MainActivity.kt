@@ -21,6 +21,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.webkit.WebViewFeature
 import com.google.android.material.appbar.MaterialToolbar
 import online.idleworld.pokegrid.data.CredentialStore
@@ -85,6 +88,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
 
         setSupportActionBar(findViewById<MaterialToolbar>(R.id.toolbar))
         expandOverlay = findViewById(R.id.expandOverlay)
+        applyEdgeToEdgeInsets()
 
         checkWebViewProfileSupport()
         requestNotificationPermissionIfNeeded()
@@ -259,6 +263,26 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             }
             .setNegativeButton(R.string.dialog_cancel, null)
             .show()
+    }
+
+    /**
+     * On edge-to-edge (Android 15+ targets draw behind system bars by default), the toolbar and
+     * the bottom row of the grid/expanded panel need their own top/bottom padding — otherwise
+     * the status bar covers the toolbar title and the nav bar covers the last row of panels.
+     */
+    private fun applyEdgeToEdgeInsets() {
+        val root = findViewById<View>(R.id.root)
+        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
+        val gridRoot = findViewById<View>(R.id.gridRoot)
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            toolbar.updatePadding(top = bars.top)
+            gridRoot.updatePadding(bottom = bars.bottom)
+            expandOverlay.updatePadding(bottom = bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
     }
 
     private fun defaultName(i: Int) = "Conta ${i + 1}"
