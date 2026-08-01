@@ -34,6 +34,7 @@ import online.idleworld.pokegrid.service.BackgroundModeController
 import online.idleworld.pokegrid.web.AlertKind
 import online.idleworld.pokegrid.web.GamePanel
 import online.idleworld.pokegrid.web.InjectedScripts
+import online.idleworld.pokegrid.web.PanelStats
 import online.idleworld.pokegrid.web.PanelStatus
 
 /**
@@ -129,6 +130,11 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
 
     override fun onError(origem: String, detalhe: String) {
         errorLog.write(origem, detalhe)
+    }
+
+    override fun onStats(index: Int, stats: PanelStats) {
+        // PokeDream disables ENABLE_RESOURCE_ALERTS (see GameConfig), so this never actually
+        // fires yet — kept as a no-op so the interface is satisfied and ready for when it does.
     }
 
     override fun onAlert(index: Int, kind: AlertKind) {

@@ -26,6 +26,9 @@ import org.json.JSONObject
 enum class PanelStatus { OFF, LOADING, ONLINE, ERROR }
 enum class AlertKind { DOWN, LOW_BALLS, LOW_POTIONS, LOW_REVIVES, SHINY }
 
+/** Snapshot read from read_alerts.js; only populated when GameConfig.ENABLE_RESOURCE_ALERTS is on. */
+data class PanelStats(val level: Int, val gold: Long, val hunt: String, val kills: Int, val xp: Long)
+
 /**
  * Owns one game panel end to end: an isolated WebView (its own login session via the
  * WebView Multi-Profile API), the domain lock, the auto-login watcher, the injected
@@ -43,6 +46,7 @@ class GamePanel(
         fun onStatus(index: Int, status: PanelStatus)
         fun onError(origem: String, detalhe: String)
         fun onAlert(index: Int, kind: AlertKind)
+        fun onStats(index: Int, stats: PanelStats)
     }
 
     companion object {
@@ -376,6 +380,16 @@ class GamePanel(
             val shinyN = o.optInt("shinyN")
             if (shinyN > lastShinyN) listener.onAlert(index, AlertKind.SHINY)
             lastShinyN = shinyN
+            listener.onStats(
+                index,
+                PanelStats(
+                    level = o.optInt("level"),
+                    gold = o.optLong("gold"),
+                    hunt = o.optString("hunt"),
+                    kills = o.optInt("kills"),
+                    xp = o.optLong("xp")
+                )
+            )
         } catch (_: Exception) {
         }
     }

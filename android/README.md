@@ -108,6 +108,9 @@ export ANDROID_HOME=/caminho/do/android-sdk   # ou local.properties com sdk.dir=
 - Esconder menu do jogo (dock), proteção de venda (confirmação antes de vender shiny/raro),
   notificação de pokébola/poção/revive baixos e de shiny — calibrados contra o WebSocket/API real
   de poke.idleworld.online (`assets/scripts/state_collector.js`, `dock.js`, `sellguard.js`).
+- A notificação de segundo plano mostra nível/ouro/hunt de cada conta ativa (lido do mesmo
+  coletor), atualizado a cada ~15s — `FarmService.updateSummary()`. Como depende do coletor
+  específico do jogo, só existe nesse flavor por enquanto (ver seção do PokeDream abaixo).
 
 ## PokeDream (2 contas): o que está desligado, e por quê
 
@@ -122,16 +125,16 @@ alerta de "sem pokébola" o tempo todo porque o contador nunca é preenchido), p
 deixar documentado — é trabalho normal de sequência, não uma limitação da arquitetura.
 
 O que **continua ligado** por ser genérico/de baixo risco mesmo sem confirmação:
-- Login automático: usa heurística por `autocomplete="username"`/`"current-password"` + botão de
-  submit, um padrão comum, não algo específico do outro jogo. Sem gatilho de URL de login (o site
-  é SPA de rota única), reforçado por um retry periódico a cada 20s.
+- Login automático: tenta primeiro `autocomplete="username"`/`"current-password"` (padrão do
+  poke.idleworld.online); se o formulário não tiver esses atributos — caso real do PokeDream,
+  confirmado por teste no aparelho — cai para `input[type=password]` (sinal confiável e
+  independente de autocomplete) e pega o campo de texto mais próximo antes dele como usuário. Sem
+  gatilho de URL de login (o site é SPA de rota única), reforçado por um retry periódico a cada
+  20s.
 - Esconder chat: heurística por texto do placeholder/posição na tela, não depende de nenhuma
   classe CSS específica.
 - Killer de popup de promo e watchdog de WebGL: procuram por seletores/eventos padrão; se não
   encontrarem nada, não fazem nada (no-op seguro).
-
-**Bom testar no aparelho de verdade** se o login automático realmente casa com o formulário do
-PokeDream — se não bater, é ajustar os seletores em `assets/scripts/login.js`, sem mexer no resto.
 
 ## O que ainda não foi portado (deixado de fora por escopo, não por limitação técnica)
 

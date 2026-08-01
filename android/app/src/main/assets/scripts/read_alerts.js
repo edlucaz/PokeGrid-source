@@ -23,5 +23,11 @@
   const hasBalls = !!(bm && bm.counts);
   const hasInv = !!(ws.inventory && ws.inventory.items);
   const live = !!(ch.id || hasBalls || hasInv);
-  return { live, hasBalls, hasInv, balls, potions, revives, shinyN: S.shinyN || 0, faintN: S.faintN || 0, caps: S.captures || 0, shinyCapN: S.shinyCapN || 0 };
+  let hunt = (ws['field-init'] && ws['field-init'].slug) || '';
+  hunt = hunt.replace(/[_-]+/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
+  return {
+    live, hasBalls, hasInv, balls, potions, revives,
+    shinyN: S.shinyN || 0, faintN: S.faintN || 0, caps: S.captures || 0, shinyCapN: S.shinyCapN || 0,
+    level: ch.level || 0, gold: ch.gold || 0, hunt, kills: S.kills || 0, xp: S.xp || 0
+  };
 })();

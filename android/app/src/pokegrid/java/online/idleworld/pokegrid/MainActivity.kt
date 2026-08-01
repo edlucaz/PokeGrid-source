@@ -33,9 +33,11 @@ import online.idleworld.pokegrid.data.ErrorLog
 import online.idleworld.pokegrid.model.Account
 import online.idleworld.pokegrid.notif.Notifier
 import online.idleworld.pokegrid.service.BackgroundModeController
+import online.idleworld.pokegrid.service.FarmService
 import online.idleworld.pokegrid.web.AlertKind
 import online.idleworld.pokegrid.web.GamePanel
 import online.idleworld.pokegrid.web.InjectedScripts
+import online.idleworld.pokegrid.web.PanelStats
 import online.idleworld.pokegrid.web.PanelStatus
 
 class MainActivity : AppCompatActivity(), GamePanel.Listener {
@@ -61,6 +63,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
     private lateinit var panels: List<GamePanel>
     private lateinit var panelViews: List<PanelViewHolder>
     private var accounts: MutableList<Account> = mutableListOf()
+    private val panelStats = arrayOfNulls<PanelStats>(4)
 
     private var ecoOn = true
     private var chatHidden = true
@@ -169,6 +172,39 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         notifier.notify(getString(R.string.app_name), msg)
     }
 
+    override fun onStats(index: Int, stats: PanelStats) {
+        if (index in panelStats.indices) panelStats[index] = stats
+        updateBackgroundSummary()
+    }
+
+    /** Builds "C1 Lv42 · 12,3K ouro · Floresta" per active account and pushes it to FarmService. */
+    private fun updateBackgroundSummary() {
+        val lines = panelStats.indices.mapNotNull { i ->
+            val s = panelStats[i] ?: return@mapNotNull null
+            if (panels.getOrNull(i)?.isOff == true) return@mapNotNull null
+            val nome = accounts.getOrNull(i)?.name?.ifBlank { defaultName(i) } ?: defaultName(i)
+            val parts = mutableListOf("Lv${s.level}", "${formatCompact(s.gold)} ouro")
+            if (s.hunt.isNotBlank()) parts += s.hunt
+            "$nome: ${parts.joinToString(" · ")}"
+        }
+        if (lines.isEmpty()) return
+        FarmService.updateSummary(this, lines.joinToString("\n"))
+    }
+
+    private fun formatCompact(n: Long): String {
+        val abs = kotlin.math.abs(n)
+        return when {
+            abs >= 1_000_000 -> formatOneDecimal(n / 1_000_000.0) + "M"
+            abs >= 1_000 -> formatOneDecimal(n / 1_000.0) + "K"
+            else -> n.toString()
+        }
+    }
+
+    private fun formatOneDecimal(v: Double): String {
+        val s = "%.1f".format(v)
+        return if (s.endsWith(".0")) s.dropLast(2) else s
+    }
+
     // ----- Menu -----
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -224,6 +260,10 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         val turningOff = !panel.isOff
         panel.setOff(turningOff)
         panelViews[i].power.alpha = if (turningOff) 0.5f else 1f
+        if (turningOff) {
+            panelStats[i] = null
+            updateBackgroundSummary()
+        }
     }
 
     private fun toggleExpand(i: Int) {

@@ -5,12 +5,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import online.idleworld.pokegrid.R
 
 /**
@@ -39,6 +41,7 @@ class FarmService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        intent?.getStringExtra(EXTRA_SUMMARY)?.let { summary = it }
         try {
             val notification = buildNotification()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -94,9 +97,11 @@ class FarmService : Service() {
             this, 0, stopIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+        val text = summary?.takeIf { it.isNotBlank() } ?: getString(R.string.bg_notif_text)
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.bg_notif_text))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.drawable.ic_notification)
             .setOngoing(true)
             .setContentIntent(contentPending)
@@ -118,6 +123,7 @@ class FarmService : Service() {
         const val CHANNEL_ID = "pokegrid_farm_service"
         private const val NOTIF_ID = 42
         const val ACTION_STOP = "online.idleworld.pokegrid.action.STOP_FARM"
+        private const val EXTRA_SUMMARY = "summary"
 
         /** Set by onStartCommand/onDestroy so MainActivity can show real diagnostics instead of guessing. */
         @Volatile
@@ -127,5 +133,22 @@ class FarmService : Service() {
         @Volatile
         var lastError: String? = null
             private set
+
+        @Volatile
+        private var summary: String? = null
+
+        /**
+         * Pushes a fresh per-account level/gold/hunt line into the ongoing notification. Only
+         * does anything while the service is actually running — no point waking it up just to
+         * carry text nobody will see.
+         */
+        fun updateSummary(context: Context, text: String) {
+            if (!isRunning) return
+            val intent = Intent(context, FarmService::class.java).putExtra(EXTRA_SUMMARY, text)
+            try {
+                ContextCompat.startForegroundService(context, intent)
+            } catch (_: Exception) {
+            }
+        }
     }
 }
