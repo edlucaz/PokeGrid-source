@@ -25,6 +25,8 @@
 > ### 🔒 Seus dados de login ficam só no seu computador
 > Login e senha são criptografados no seu próprio PC e nunca saem dele. Nada de servidor, nada de repositório. O código está todo aqui pra você conferir.
 
+> 📱 **Também tem versão Android**, com a mesma isolação de sessão por conta: **[android/](android/)**.
+
 ## O que é
 
 Quatro contas rodando ao mesmo tempo, cada uma no seu quadrante e com sessão separada. Você salva o login uma vez e o app entra sozinho nas próximas. Se a sessão cair no meio do farm, ele loga de novo sem você precisar estar por perto. Ele não automatiza o jogo nem toca no captcha, só organiza as contas que você já tem.

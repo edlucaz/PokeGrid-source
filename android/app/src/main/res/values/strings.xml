@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PokeGrid</string>
+
+    <string name="action_accounts">Treinadores</string>
+    <string name="action_eco">Eco</string>
+    <string name="action_eco_off">Eco off</string>
+    <string name="action_chat_shown">Chat</string>
+    <string name="action_chat_hidden">Chat oculto</string>
+    <string name="action_dock_shown">Menu</string>
+    <string name="action_dock_hidden">Menu oculto</string>
+    <string name="action_sellguard">Proteção de venda</string>
+    <string name="action_awake">Acordado</string>
+    <string name="action_sleep">Dormir</string>
+    <string name="action_error_log">Relatório de erros</string>
+    <string name="action_login_all">Entrar em todas</string>
+
+    <string name="panel_status_off">Desligado</string>
+    <string name="panel_status_loading">Carregando…</string>
+    <string name="panel_status_online">Online</string>
+    <string name="panel_status_error">Erro</string>
+
+    <string name="dialog_accounts_title">Treinadores salvos</string>
+    <string name="dialog_accounts_hint">Preencha e-mail e senha de cada painel. As senhas ficam cifradas neste aparelho (Android Keystore) e nunca saem dele.</string>
+    <string name="dialog_row_title">Painel</string>
+    <string name="dialog_name_hint">Apelido do painel</string>
+    <string name="dialog_email_hint">E-mail ou usuário</string>
+    <string name="dialog_password_hint">Senha</string>
+    <string name="dialog_save">Salvar</string>
+    <string name="dialog_cancel">Cancelar</string>
+    <string name="dialog_clear">Limpar</string>
+
+    <string name="notif_channel_name">Alertas de conta</string>
+    <string name="notif_channel_desc">Avisa quando uma conta cai ou fica sem pokébolas/poções/revives.</string>
+    <string name="notif_msg_down">%1$s caiu da sessão</string>
+    <string name="notif_msg_balls">%1$s está sem pokébolas</string>
+    <string name="notif_msg_potions">%1$s está com poucas poções</string>
+    <string name="notif_msg_revives">%1$s está com poucos revives</string>
+    <string name="notif_msg_shiny">%1$s capturou um shiny ✨</string>
+
+    <string name="external_link_warning">Link externo aberto no seu navegador. A senha só é digitada na tela oficial do jogo.</string>
+    <string name="webview_unsupported_title">WebView do sistema desatualizado</string>
+    <string name="webview_unsupported_msg">Este aparelho não suporta perfis isolados por painel (WebView Multi-Profile). Atualize o app "Android System WebView" ou o Chrome na Play Store e abra o PokeGrid de novo. Sem essa atualização, todos os painéis compartilhariam a mesma sessão de login.</string>
+    <string name="ok">OK</string>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_login_all"
+        android:title="@string/action_login_all"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_accounts"
+        android:title="@string/action_accounts"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_eco"
+        android:title="@string/action_eco"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_chat"
+        android:title="@string/action_chat_hidden"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_dock"
+        android:title="@string/action_dock_shown"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_sellguard"
+        android:title="@string/action_sellguard"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_awake"
+        android:title="@string/action_sleep"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_error_log"
+        android:title="@string/action_error_log"
+        app:showAsAction="never" />
+</menu>

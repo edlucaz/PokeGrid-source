@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- accounts.enc is AES-GCM ciphertext bound to this device's AndroidKeyStore key, which never
+     leaves the device and is not restored by backup, so a restored copy would be undecryptable
+     garbage. Excluding it here avoids shipping a useless encrypted blob to backup storage. -->
+<full-backup-content>
+    <exclude domain="file" path="accounts.enc" />
+    <exclude domain="file" path="relatorio-de-erros.log" />
+</full-backup-content>
