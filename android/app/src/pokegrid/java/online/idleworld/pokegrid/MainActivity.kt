@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -23,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.webkit.WebViewFeature
 import com.google.android.material.appbar.MaterialToolbar
@@ -274,9 +276,15 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         val root = findViewById<View>(R.id.root)
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         val gridRoot = findViewById<View>(R.id.gridRoot)
+        // The toolbar's XML height is a fixed ?attr/actionBarSize; padding alone would squeeze
+        // its title into less vertical space than it needs and clip it (as seen on PokeDream).
+        // Growing the height by the same amount as the top padding keeps the actionBarSize-tall
+        // content area intact below the status-bar spacer.
+        val baseToolbarHeight = toolbar.layoutParams.height
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            toolbar.updateLayoutParams<ViewGroup.LayoutParams> { height = baseToolbarHeight + bars.top }
             toolbar.updatePadding(top = bars.top)
             gridRoot.updatePadding(bottom = bars.bottom)
             expandOverlay.updatePadding(bottom = bars.bottom)

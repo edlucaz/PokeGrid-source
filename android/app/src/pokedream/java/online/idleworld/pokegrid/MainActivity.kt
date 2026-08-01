@@ -223,9 +223,15 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         val root = findViewById<View>(R.id.root)
         val switcherCard = findViewById<View>(R.id.switcherCard)
         val baseBottomMargin = (20 * resources.displayMetrics.density).toInt()
+        // The toolbar's XML height is a fixed ?attr/actionBarSize; padding alone would squeeze
+        // its title into less vertical space than it needs and clip it. Growing the height by
+        // the same amount as the top padding keeps the actionBarSize-tall content area intact
+        // below the status-bar spacer.
+        val baseToolbarHeight = toolbar.layoutParams.height
 
         ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            toolbar.updateLayoutParams<ViewGroup.LayoutParams> { height = baseToolbarHeight + bars.top }
             toolbar.updatePadding(top = bars.top)
             switcherCard.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = baseBottomMargin + bars.bottom
