@@ -63,7 +63,9 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
     private var chatHidden = true
     private var awakeOn = false
 
-    private val notifPermLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val notifPermLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        bgController.onNotificationPermissionResult(granted)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

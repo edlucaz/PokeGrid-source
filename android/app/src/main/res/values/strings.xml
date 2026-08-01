@@ -49,6 +49,8 @@
     <string name="battery_opt_title">Otimização de bateria</string>
     <string name="battery_opt_msg">Pra farmar de forma confiável com a tela apagada, o Android precisa parar de limitar este app quando a bateria otimiza processos em segundo plano. Quer abrir as configurações e liberar isso?</string>
     <string name="battery_opt_open">Abrir configurações</string>
+    <string name="notif_blocked_title">Notificações bloqueadas</string>
+    <string name="notif_blocked_msg">Sem permissão de notificação, o aviso de "rodando em segundo plano" fica invisível — mas o farm continua ativo mesmo assim, o Android só não te mostra o aviso fixo. Pra ver a notificação (e ajudar o sistema a não encerrar o app), libere as notificações do app nas configurações.</string>
 
     <string name="external_link_warning">Link externo aberto no seu navegador. A senha só é digitada na tela oficial do jogo.</string>
     <string name="webview_unsupported_title">WebView do sistema desatualizado</string>

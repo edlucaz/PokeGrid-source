@@ -1,13 +1,16 @@
 package online.idleworld.pokegrid.service
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import online.idleworld.pokegrid.R
 
@@ -44,6 +47,54 @@ class BackgroundModeController(private val activity: Activity) {
         }
     }
 
+    /**
+     * Call from the POST_NOTIFICATIONS ActivityResultLauncher callback. The service can call
+     * startForeground() before the user answers that permission dialog — when that happens the
+     * notification is silently suppressed and never reappears on its own, even after the user
+     * grants the permission. Re-triggering the service here is what makes it actually show up.
+     */
+    fun onNotificationPermissionResult(granted: Boolean) {
+        prefs.edit().putBoolean(KEY_ASKED_NOTIF, true).apply()
+        if (granted && enabled) {
+            ContextCompat.startForegroundService(activity, Intent(activity, FarmService::class.java))
+        } else {
+            maybeExplainBlockedNotifications()
+        }
+    }
+
+    /**
+     * Covers the case where notifications were already denied in an earlier session (before
+     * this flow existed): Android won't show its own permission dialog again, so the only way
+     * left to fix it is the app's notification settings screen — this points the user there,
+     * once.
+     */
+    private fun maybeExplainBlockedNotifications() {
+        if (!enabled) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        if (granted) return
+        val canStillAsk = ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)
+        val askedBefore = prefs.getBoolean(KEY_ASKED_NOTIF, false)
+        if (canStillAsk || !askedBefore) return // system will still prompt on its own, or we haven't even tried yet
+        if (prefs.getBoolean(KEY_EXPLAINED_NOTIF_BLOCKED, false)) return
+        prefs.edit().putBoolean(KEY_EXPLAINED_NOTIF_BLOCKED, true).apply()
+
+        AlertDialog.Builder(activity)
+            .setTitle(R.string.notif_blocked_title)
+            .setMessage(R.string.notif_blocked_msg)
+            .setPositiveButton(R.string.battery_opt_open) { _, _ ->
+                try {
+                    activity.startActivity(
+                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
+                    )
+                } catch (_: Exception) {
+                }
+            }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
     private fun maybeAskBatteryExemption() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val pm = activity.getSystemService(PowerManager::class.java) ?: return
@@ -70,5 +121,7 @@ class BackgroundModeController(private val activity: Activity) {
         private const val PREFS_NAME = "pokegrid_prefs"
         private const val KEY_ENABLED = "bg_mode_enabled"
         private const val KEY_ASKED_BATTERY = "bg_mode_asked_battery"
+        private const val KEY_ASKED_NOTIF = "bg_mode_asked_notif"
+        private const val KEY_EXPLAINED_NOTIF_BLOCKED = "bg_mode_explained_notif_blocked"
     }
 }
