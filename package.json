@@ -21,6 +21,7 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
+    "publish": null,
     "appId": "online.idleworld.pokegrid",
     "productName": "PokeGrid",
     "icon": "build/icon.png",

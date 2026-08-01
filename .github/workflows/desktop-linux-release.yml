@@ -1,0 +1,46 @@
+name: Build and release Linux desktop app
+
+# The desktop app has no auto-updater and isn't on any app store, so this is the whole
+# distribution path for Linux: every push to main touching the app's source builds an AppImage
+# (runs on any modern distro, Pop!_OS included, no install needed) and publishes it as a GitHub
+# Release. See android/.github workflow (release.yml) for the same pattern applied to the
+# Android apps.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "main.js"
+      - "preload.js"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "presets/**"
+      - "build/**"
+      - ".github/workflows/desktop-linux-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Build AppImage
+        run: npx electron-builder --linux AppImage --publish never
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-${{ github.run_number }}
+          name: PokeGrid Desktop Build ${{ github.run_number }}
+          generate_release_notes: true
+          files: dist/*.AppImage
