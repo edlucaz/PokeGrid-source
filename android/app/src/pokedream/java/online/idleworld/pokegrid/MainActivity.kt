@@ -25,6 +25,7 @@ import online.idleworld.pokegrid.data.CredentialStore
 import online.idleworld.pokegrid.data.ErrorLog
 import online.idleworld.pokegrid.model.Account
 import online.idleworld.pokegrid.notif.Notifier
+import online.idleworld.pokegrid.service.BackgroundModeController
 import online.idleworld.pokegrid.web.AlertKind
 import online.idleworld.pokegrid.web.GamePanel
 import online.idleworld.pokegrid.web.InjectedScripts
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
     private lateinit var notifier: Notifier
     private lateinit var scripts: InjectedScripts
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var bgController: BackgroundModeController
 
     private lateinit var stages: List<FrameLayout>
     private lateinit var chips: List<ChipViewHolder>
@@ -66,12 +68,14 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         errorLog = ErrorLog(this)
         notifier = Notifier(this)
         scripts = InjectedScripts(this)
+        bgController = BackgroundModeController(this)
 
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
         checkWebViewProfileSupport()
         requestNotificationPermissionIfNeeded()
+        bgController.applyPersisted()
 
         accounts = credentialStore.load().toMutableList()
 
@@ -150,6 +154,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         menu.findItem(R.id.action_awake)?.setTitle(if (awakeOn) R.string.action_awake else R.string.action_sleep)
         val currentOff = panels.getOrNull(activeIndex)?.isOff ?: false
         menu.findItem(R.id.action_power)?.setTitle(if (currentOff) R.string.action_power_on else R.string.action_power_off)
+        menu.findItem(R.id.action_bg)?.setTitle(if (bgController.enabled) R.string.action_bg_on else R.string.action_bg_off)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -160,6 +165,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             R.id.action_eco -> { ecoOn = !ecoOn; panels.forEach { it.setEco(ecoFps()) }; invalidateOptionsMenu() }
             R.id.action_chat -> { chatHidden = !chatHidden; panels.forEach { it.setChatHidden(chatHidden) }; invalidateOptionsMenu() }
             R.id.action_awake -> { awakeOn = !awakeOn; applyAwake(); invalidateOptionsMenu() }
+            R.id.action_bg -> { bgController.toggle(); invalidateOptionsMenu() }
             R.id.action_error_log -> startActivity(Intent.createChooser(errorLog.shareIntent(), null))
             else -> return super.onOptionsItemSelected(item)
         }

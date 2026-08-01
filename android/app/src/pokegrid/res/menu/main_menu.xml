@@ -31,6 +31,10 @@
         android:title="@string/action_sleep"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_bg"
+        android:title="@string/action_bg_on"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_error_log"
         android:title="@string/action_error_log"
         app:showAsAction="never" />

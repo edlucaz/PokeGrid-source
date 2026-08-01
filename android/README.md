@@ -39,6 +39,8 @@ android/app/src/
       data/CredentialStore.kt # AES-256-GCM via AndroidKeyStore (equivalente ao safeStorage)
       data/ErrorLog.kt        # log rotativo + compartilhar via FileProvider
       notif/Notifier.kt       # notificações de queda/pokébola/poção/revive baixos/shiny
+      service/FarmService.kt  # foreground service + wake lock: farm continua com tela apagada
+      service/BackgroundModeController.kt  # liga/desliga o FarmService, persiste a preferência
       web/GamePanel.kt        # WebView isolada por perfil, domain lock, watchdog, alertas
       web/InjectedScripts.kt  # carrega/templeteia os scripts de assets/scripts
     assets/scripts/           # JS portado quase 1:1 do index.html do Electron
@@ -98,6 +100,7 @@ export ANDROID_HOME=/caminho/do/android-sdk   # ou local.properties com sdk.dir=
 - Credenciais cifradas com chave do AndroidKeyStore (nunca saem do aparelho).
 - Watchdog de crash/travamento do painel (recria a WebView mantendo a sessão do perfil).
 - Relatório de erros compartilhável.
+- **Continua rodando com a tela apagada ou trocando de app** (menu "Segundo plano: ligado").
 
 ## PokeGrid (4 contas) tem, além disso
 
@@ -137,9 +140,30 @@ PokeDream — se não bater, é ajustar os seletores em `assets/scripts/login.js
 - Idioma (só português por enquanto; a estrutura de `strings.xml` já suporta `values-en/`).
 - Mute de áudio por painel (WebView não tem API pública equivalente ao `setAudioMuted` do
   Electron; daria pra simular via script mutando `<audio>/<video>`, não implementado ainda).
-- Execução em segundo plano: como qualquer app Android normal, farmar para de fato rodar quando
-  o app vai pra background por tempo suficiente (o sistema pausa a Activity). Contornar isso
-  exigiria um foreground `Service` dedicado — não implementado nesta primeira versão.
+
+## Segundo plano: como funciona e onde para
+
+Ligado por padrão (menu "Segundo plano"). Ao ativar:
+
+1. Sobe o `FarmService`, um foreground service (com notificação fixa, obrigatória pelo Android
+   pra esse tipo de serviço) que segura um `PARTIAL_WAKE_LOCK` — mantém a CPU acordada mesmo com
+   a tela apagada, equivalente ao `powerSaveBlocker('prevent-app-suspension')` do Electron.
+2. Na primeira vez, pede pra tirar o app da otimização de bateria do Android (`ACTION_REQUEST_
+   IGNORE_BATTERY_OPTIMIZATIONS`) — sem isso, o Doze do sistema pode suspender rede em segundo
+   plano de qualquer jeito, foreground service ou não.
+
+Isso cobre os dois casos pedidos: **apertar Home / abrir outro app** (a `Activity` só pausa,
+nunca é destruída — as WebViews continuam rodando) e **apagar a tela** (o wake lock impede o
+processador de dormir).
+
+**O que não cobre:** arrastar o PokeGrid pra fora da lista de recentes (aquele gesto de "fechar"
+o app). Isso destrói a `Activity` de verdade — as WebViews morrem junto, e o `FarmService` se
+desliga sozinho (`onTaskRemoved`) em vez de deixar uma notificação de "rodando" pra algo que não
+está mais rodando. Pra manter as sessões vivas mesmo nesse caso seria preciso outra arquitetura
+(WebViews *headless* vivendo só no Service, sem `Activity` dona) — não implementado agora porque
+esbarra em como o Android mostra diálogo de JS (`window.confirm` da proteção de venda, por
+exemplo, precisa de uma `Activity` de verdade pra aparecer). Ou seja: **não feche o app pelos
+recentes** se quiser manter o farm rodando — só minimizar ou apagar a tela.
 
 ## Segurança
 

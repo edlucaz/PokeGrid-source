@@ -27,6 +27,7 @@ import online.idleworld.pokegrid.data.CredentialStore
 import online.idleworld.pokegrid.data.ErrorLog
 import online.idleworld.pokegrid.model.Account
 import online.idleworld.pokegrid.notif.Notifier
+import online.idleworld.pokegrid.service.BackgroundModeController
 import online.idleworld.pokegrid.web.AlertKind
 import online.idleworld.pokegrid.web.GamePanel
 import online.idleworld.pokegrid.web.InjectedScripts
@@ -49,6 +50,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
     private lateinit var errorLog: ErrorLog
     private lateinit var notifier: Notifier
     private lateinit var scripts: InjectedScripts
+    private lateinit var bgController: BackgroundModeController
 
     private lateinit var expandOverlay: FrameLayout
     private lateinit var panels: List<GamePanel>
@@ -79,12 +81,14 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
         errorLog = ErrorLog(this)
         notifier = Notifier(this)
         scripts = InjectedScripts(this)
+        bgController = BackgroundModeController(this)
 
         setSupportActionBar(findViewById<MaterialToolbar>(R.id.toolbar))
         expandOverlay = findViewById(R.id.expandOverlay)
 
         checkWebViewProfileSupport()
         requestNotificationPermissionIfNeeded()
+        bgController.applyPersisted()
 
         accounts = credentialStore.load().toMutableList()
 
@@ -178,6 +182,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             it.title = getString(R.string.action_sellguard) + if (sellGuardOn) " ✓" else ""
         }
         menu.findItem(R.id.action_awake)?.setTitle(if (awakeOn) R.string.action_awake else R.string.action_sleep)
+        menu.findItem(R.id.action_bg)?.setTitle(if (bgController.enabled) R.string.action_bg_on else R.string.action_bg_off)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -189,6 +194,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             R.id.action_dock -> { dockHidden = !dockHidden; panels.forEach { it.setDockHidden(dockHidden) }; invalidateOptionsMenu() }
             R.id.action_sellguard -> { sellGuardOn = !sellGuardOn; panels.forEach { it.setSellGuard(sellGuardOn) }; invalidateOptionsMenu() }
             R.id.action_awake -> { awakeOn = !awakeOn; applyAwake(); invalidateOptionsMenu() }
+            R.id.action_bg -> { bgController.toggle(); invalidateOptionsMenu() }
             R.id.action_error_log -> startActivity(Intent.createChooser(errorLog.shareIntent(), null))
             else -> return super.onOptionsItemSelected(item)
         }
