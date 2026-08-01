@@ -39,13 +39,22 @@ class FarmService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        val notification = buildNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(NOTIF_ID, notification)
+        try {
+            val notification = buildNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIF_ID, notification)
+            }
+            acquireWakeLock()
+            isRunning = true
+            lastError = null
+        } catch (e: Exception) {
+            // Never let a notification/foreground-type quirk on some OEM skin crash the whole
+            // app — record it so the in-app diagnostics screen can surface it instead.
+            lastError = "${e.javaClass.simpleName}: ${e.message}"
+            isRunning = false
         }
-        acquireWakeLock()
         return START_STICKY
     }
 
@@ -55,6 +64,7 @@ class FarmService : Service() {
     }
 
     override fun onDestroy() {
+        isRunning = false
         releaseWakeLock()
         super.onDestroy()
     }
@@ -105,8 +115,17 @@ class FarmService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "pokegrid_farm_service"
+        const val CHANNEL_ID = "pokegrid_farm_service"
         private const val NOTIF_ID = 42
         const val ACTION_STOP = "online.idleworld.pokegrid.action.STOP_FARM"
+
+        /** Set by onStartCommand/onDestroy so MainActivity can show real diagnostics instead of guessing. */
+        @Volatile
+        var isRunning: Boolean = false
+            private set
+
+        @Volatile
+        var lastError: String? = null
+            private set
     }
 }

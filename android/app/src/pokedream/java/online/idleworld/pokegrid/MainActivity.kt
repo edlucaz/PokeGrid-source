@@ -174,6 +174,7 @@ class MainActivity : AppCompatActivity(), GamePanel.Listener {
             R.id.action_chat -> { chatHidden = !chatHidden; panels.forEach { it.setChatHidden(chatHidden) }; invalidateOptionsMenu() }
             R.id.action_awake -> { awakeOn = !awakeOn; applyAwake(); invalidateOptionsMenu() }
             R.id.action_bg -> { bgController.toggle(); invalidateOptionsMenu() }
+            R.id.action_diag -> bgController.showDiagnostics()
             R.id.action_error_log -> startActivity(Intent.createChooser(errorLog.shareIntent(), null))
             else -> return super.onOptionsItemSelected(item)
         }

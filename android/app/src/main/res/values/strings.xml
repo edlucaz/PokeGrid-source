@@ -18,6 +18,8 @@
     <string name="action_power_off">Desligar esta conta</string>
     <string name="action_bg_on">Segundo plano: ligado</string>
     <string name="action_bg_off">Segundo plano: desligado</string>
+    <string name="action_diag">Diagnóstico do segundo plano</string>
+    <string name="diag_title">Diagnóstico</string>
 
     <string name="panel_status_off">Desligado</string>
     <string name="panel_status_loading">Carregando…</string>

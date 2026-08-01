@@ -2,6 +2,7 @@ package online.idleworld.pokegrid.service
 
 import android.Manifest
 import android.app.Activity
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,6 +12,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import online.idleworld.pokegrid.R
 
@@ -92,6 +94,51 @@ class BackgroundModeController(private val activity: Activity) {
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    /**
+     * Reports the actual live state instead of guessing: whether the toggle is on, whether the
+     * service really started (FarmService.isRunning, set from onStartCommand — not just "we
+     * asked Android to start it"), and every permission/setting that can silently swallow the
+     * notification without the service itself failing.
+     */
+    fun showDiagnostics() {
+        if (enabled) {
+            try {
+                ContextCompat.startForegroundService(activity, Intent(activity, FarmService::class.java))
+            } catch (_: Exception) {
+            }
+        }
+
+        val notifPermGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        val notifGloballyEnabled = NotificationManagerCompat.from(activity).areNotificationsEnabled()
+        val channel = activity.getSystemService(NotificationManager::class.java)?.getNotificationChannel(FarmService.CHANNEL_ID)
+        val channelOk = channel == null || channel.importance != NotificationManager.IMPORTANCE_NONE
+        val batteryIgnored = activity.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(activity.packageName) ?: false
+
+        fun yn(b: Boolean) = if (b) "Sim" else "Não"
+        val msg = buildString {
+            appendLine("Segundo plano ligado no menu: ${yn(enabled)}")
+            appendLine("Serviço realmente iniciou: ${yn(FarmService.isRunning)}")
+            appendLine("Notificações do app permitidas (geral): ${yn(notifGloballyEnabled)}")
+            appendLine("Permissão de notificação concedida: ${yn(notifPermGranted)}")
+            appendLine("Canal \"Segundo plano\" ativo: ${yn(channelOk)}")
+            appendLine("Ignorando otimização de bateria: ${yn(batteryIgnored)}")
+            FarmService.lastError?.let { appendLine("\nErro ao iniciar o serviço: $it") }
+            if (FarmService.isRunning && (!notifGloballyEnabled || !notifPermGranted || !channelOk)) {
+                appendLine("\nO farm está rodando, mas a notificação está bloqueada por uma das linhas marcadas \"Não\" acima — ajuste isso nas configurações do app.")
+            }
+        }.trim()
+
+        AlertDialog.Builder(activity)
+            .setTitle(R.string.diag_title)
+            .setMessage(msg)
+            .setPositiveButton(R.string.ok, null)
             .show()
     }
 
