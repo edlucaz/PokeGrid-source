@@ -1,3 +1,5 @@
+> Status: estável · Tipo: electron · Deploy: nenhum (roda a partir do código; AppImage/portable por electron-builder)
+
 <div align="center">
 
 <img src="tray.png" width="72" alt="PokeGrid">
