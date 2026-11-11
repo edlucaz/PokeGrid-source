@@ -1,4 +1,4 @@
-# CLAUDE.md — pokegrid (pasta `PokeGrid-source`)
+# CLAUDE.md — pokegrid (pasta `pokegrid`, antes `PokeGrid-source`)
 
 ## O que é
 
@@ -34,5 +34,5 @@ Nenhum deploy web. Empacotamento por electron-builder. O setup Docker/VNC foi us
 ## Regras do projeto
 
 - Docs em pt-BR; código e termos técnicos em inglês. Commits: Conventional Commits em pt-BR (histórico antigo em minúsculas sem prefixo).
-- Pasta `PokeGrid-source` vira `pokegrid` na Fase 2 (`_padrao/projetos.json`). O checkout principal tem mudanças não commitadas do Lucas (`index.html`, `main.js`, `preload.js`, ícones, `.gitignore`); esta branch parte do último commit e não as inclui.
+- Pasta `PokeGrid-source` virou `pokegrid` na Fase 2 (2026-11-11) (`_padrao/projetos.json`). O checkout principal tem mudanças não commitadas do Lucas (`index.html`, `main.js`, `preload.js`, ícones, `.gitignore`); esta branch parte do último commit e não as inclui.
 - Padrão de todos os projetos: `/mnt/backup500gb/Projetos/_padrao/PADRAO.md` (nível leve).
