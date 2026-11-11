@@ -9,3 +9,4 @@ accounts.enc.*
 dom-dump.txt
 .env*
 !.env.example
+backups/

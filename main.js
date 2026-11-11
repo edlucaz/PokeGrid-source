@@ -143,6 +143,14 @@ ipcMain.handle('preset:read', (_e, name) => {
   try { return fs.readFileSync(path.join(__dirname, 'presets', name), 'utf8'); } catch { return ''; }
 });
 
+// Semente de sessao pontual (uso manual, unico): permite importar um accessToken/
+// refreshToken ja obtido em outro navegador pro painel indicado, sem precisar
+// repetir o login (ex.: quando o provedor de login bloqueia navegador embutido).
+// So le de variavel de ambiente, nunca grava nada em disco.
+ipcMain.handle('seedTokens:get', () => {
+  try { return JSON.parse(process.env.POKEGRID_SEED_TOKENS || '{}'); } catch { return {}; }
+});
+
 // Anti-sono: impede o PC de dormir enquanto farma (a tela ainda pode desligar).
 let awakeId = null;
 ipcMain.handle('awake:set', (_e, on) => {

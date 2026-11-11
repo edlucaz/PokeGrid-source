@@ -513,6 +513,21 @@
   const webviews = [];
   const off = [false, false, false, false];
   const lastLogin = [0, 0, 0, 0]; // cooldown do auto-login por painel (evita ressubmeter em loop)
+  // Semente de sessao pontual (ver main.js): mapa {"<indice do painel>": {accessToken, refreshToken}}.
+  // A busca e assincrona e pode chegar depois do dom-ready do painel (que so dispara
+  // uma vez por carregamento) - por isso tentaSeed roda dos dois lados: no dom-ready
+  // (caso o token ja tenha chegado) e de novo quando a promessa resolver (caso o
+  // painel ja tivesse carregado antes disso). O guard "seeded" evita rodar 2x.
+  let seedTokens = {}; const seeded = [false, false, false, false];
+  const tentaSeed = (i) => {
+    const wv = webviews[i];
+    if (!wv || seeded[i] || !seedTokens[i]) return;
+    if (!(wv.getURL() || '').startsWith(LOGIN_URL)) return;
+    seeded[i] = true;
+    const tokJson = JSON.stringify(JSON.stringify(seedTokens[i]));
+    wv.executeJavaScript(`sessionStorage.setItem('pokeweb:tokens', ${tokJson}); location.reload();`).catch(() => {});
+  };
+  try { window.pokeAPI.getSeedTokens().then(st => { seedTokens = st || {}; Object.keys(seedTokens).forEach(k => tentaSeed(+k)); }); } catch {}
   const alertedBalls = [false, false, false, false]; // ja avisou "sem pokebola" nesta falta?
   let count = Math.min(4, Math.max(1, +localStorage.getItem('count') || 4)); // quantos paineis rodar (1 a 4)
   let muted = localStorage.getItem('muted') === '1';
@@ -684,8 +699,9 @@
       // canal do painel pro card de IV do app: a extensao marca a mensagem, aqui a gente pesca
       wv.addEventListener('console-message', (e) => {
         const m = e && e.message;
-        if (typeof m !== 'string' || m.lastIndexOf('__PGIV__', 0) !== 0) return;
-        try { ivRecebe(i, JSON.parse(m.slice(8))); } catch {}
+        if (typeof m !== 'string') return;
+        if (m.lastIndexOf('__PGIV__', 0) === 0) { try { ivRecebe(i, JSON.parse(m.slice(8))); } catch {} return; }
+        if (m.lastIndexOf('__SEEDCHECK__', 0) === 0) { try { window.pokeAPI.logError('seed-check', 'painel ' + i + ': ' + m.slice(13)); } catch {} }
       });
       let fails = 0, alertedDown = false; // watchdog: falhas de carga do painel e se ja avisou a queda
       let zoom = +(localStorage.getItem('zoom' + i) || 1);
@@ -728,6 +744,12 @@ S.supBase=cur;if(S.picBase==null){S.picBase=now;}else{if(now>S.picBase){const do
           wv.executeJavaScript(dockScript(dockHidden)).catch(() => {});
           // so na tela de login, pra nao rodar a toa dentro do jogo
           if ((wv.getURL() || '').startsWith(LOGIN_URL)) wv.executeJavaScript(scrollLoginScript).catch(() => {});
+          tentaSeed(i); // semente de sessao pontual, se houver token esperando pra este painel
+          // diagnostico temporario: confirma (sem expor o valor) se o token sobrevive no
+          // storage apos o reload, e se a pagina ainda acha que nao esta logada.
+          // window.pokeAPI nao existe dentro do webview (preload so roda na janela
+          // principal), entao manda por console.log e deixa o listener abaixo relatar.
+          if (seedTokens[i]) wv.executeJavaScript(`(() => { try { const v = sessionStorage.getItem('pokeweb:tokens'); console.log('__SEEDCHECK__' + JSON.stringify({presente: !!v, tam: v ? v.length : 0, url: location.href})); } catch (e) { console.log('__SEEDCHECK__erro:' + e.message); } })()`).catch(() => {});
           wv.executeJavaScript(`localStorage.setItem('poke_lang', ${JSON.stringify(lang === 'pt' ? 'pt' : 'en')})`).catch(() => {}); // mantem o jogo no idioma escolhido (es usa en, o jogo so tem pt/en)
           injectScripts(wv); // userscripts habilitados (IV calc e os do usuário)
         } catch {}
